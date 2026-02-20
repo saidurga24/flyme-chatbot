@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlyMe ✈️ - Flight Booking Assistant</title>
+    <meta name="description" content="FlyMe chatbot for booking holiday flights. Tell us your travel plans and we'll help you find the best flights.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="chat-header">
+            <div class="header-content">
+                <div class="bot-avatar">
+                    <span class="avatar-icon">✈️</span>
+                </div>
+                <div class="header-info">
+                    <h1>FlyMe</h1>
+                    <p class="status-text">
+                        <span class="status-dot"></span>
+                        Online — Ready to help
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Messages Area -->
+        <main class="chat-messages" id="chatMessages">
+            <div class="date-divider">
+                <span id="todayDate"></span>
+            </div>
+            <div class="message bot-message" id="welcomeMessage">
+                <div class="message-bubble">
+                    <p>Welcome to <strong>FlyMe</strong> ✈️</p>
+                    <p>I'm your travel booking assistant! I can help you find and book flights.</p>
+                    <p>Just tell me:</p>
+                    <ul>
+                        <li>🏙️ Where you're flying from and to</li>
+                        <li>📅 Your departure and return dates</li>
+                        <li>💰 Your maximum budget</li>
+                    </ul>
+                    <p>For example: <em>"I want to fly from Paris to New York on March 15, returning March 22, with a budget of $1000."</em></p>
+                </div>
+                <span class="message-time" id="welcomeTime"></span>
+            </div>
+        </main>
+
+        <!-- Quick Suggestions -->
+        <div class="suggestions" id="suggestions">
+            <button class="suggestion-chip" onclick="sendSuggestion('Book a flight from London to Tokyo')">
+                🇬🇧 → 🇯🇵 London to Tokyo
+            </button>
+            <button class="suggestion-chip" onclick="sendSuggestion('I want to fly from Paris to New York on March 15, returning March 22, budget $1000')">
+                🇫🇷 → 🇺🇸 Paris to NYC
+            </button>
+            <button class="suggestion-chip" onclick="sendSuggestion('Help')">
+                ❓ Help
+            </button>
+        </div>
+
+        <!-- Input Area -->
+        <footer class="chat-input-area">
+            <div class="input-container">
+                <input
+                    type="text"
+                    id="userInput"
+                    class="chat-input"
+                    placeholder="Type your message..."
+                    autocomplete="off"
+                    autofocus
+                >
+                <button class="send-button" id="sendButton" onclick="sendMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/chat.js"></script>
+</body>
+</html>
