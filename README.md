@@ -96,7 +96,7 @@ cp .env.example .env
 ### Running Locally
 
 ```bash
-python app.py
+cd P10_01_chatbot && python app.py
 ```
 
 Open http://localhost:3978 in your browser to use the web chat interface.

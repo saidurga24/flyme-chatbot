@@ -37,7 +37,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        python -m pytest tests/ -v --tb=short
+        python -m pytest P10_04_scripts/tests/ -v --tb=short
       env:
         MicrosoftAppId: ""
         MicrosoftAppPassword: ""
