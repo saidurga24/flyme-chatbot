@@ -2,7 +2,7 @@
 # Copyright (c) 2024. All rights reserved.
 # Licensed under the MIT License.
 
-"""Main dialog - entry point dialog with LUIS/CLU recognition."""
+"""Main dialog - entry point dialog with CLU recognition."""
 
 from botbuilder.dialogs import (
     ComponentDialog,
@@ -16,7 +16,7 @@ from botbuilder.schema import InputHints
 
 from booking_details import BookingDetails
 from flight_booking_recognizer import FlightBookingRecognizer
-from helpers.luis_helper import LuisHelper, Intent
+from helpers.clu_helper import CluHelper, Intent
 from .booking_dialog import BookingDialog
 
 
@@ -24,19 +24,19 @@ class MainDialog(ComponentDialog):
     """
     Main dialog that handles the initial user message.
     
-    Uses LUIS/CLU to recognize intent and extract entities,
+    Uses Azure AI Language CLU to recognize intent and extract entities,
     then routes to the appropriate dialog.
     """
 
     def __init__(
         self,
-        luis_recognizer: FlightBookingRecognizer,
+        clu_recognizer: FlightBookingRecognizer,
         booking_dialog: BookingDialog,
         telemetry_client=None,
     ):
         super(MainDialog, self).__init__(MainDialog.__name__)
 
-        self._luis_recognizer = luis_recognizer
+        self._clu_recognizer = clu_recognizer
         self._booking_dialog_id = booking_dialog.id
 
         if telemetry_client:
@@ -57,13 +57,13 @@ class MainDialog(ComponentDialog):
         self, step_context: WaterfallStepContext
     ) -> DialogTurnResult:
         """
-        Introduction step: check if LUIS is configured. 
+        Introduction step: check if CLU is configured. 
         If not, inform the user. Otherwise, prompt for input.
         """
-        if not self._luis_recognizer.is_configured:
+        if not self._clu_recognizer.is_configured:
             await step_context.context.send_activity(
                 MessageFactory.text(
-                    "⚠️ LUIS/CLU is not configured. Please check your .env file.\n\n"
+                    "⚠️ CLU is not configured. Please check your .env file.\n\n"
                     "You can still test the dialog flow - just tell me about "
                     "your travel plans!",
                     input_hint=InputHints.ignoring_input,
@@ -94,20 +94,20 @@ class MainDialog(ComponentDialog):
         self, step_context: WaterfallStepContext
     ) -> DialogTurnResult:
         """
-        Action step: call LUIS/CLU to recognize intent and entities,
+        Action step: call CLU to recognize intent and entities,
         then route to the appropriate dialog.
         """
         booking_details = BookingDetails()
 
-        if not self._luis_recognizer.is_configured:
-            # LUIS not configured - go directly to booking dialog
+        if not self._clu_recognizer.is_configured:
+            # CLU not configured - go directly to booking dialog
             # and let user fill in all fields manually
             return await step_context.begin_dialog(
                 self._booking_dialog_id, booking_details
             )
 
-        # Call LUIS/CLU and process the result
-        recognizer_result = await self._luis_recognizer.recognize(
+        # Call CLU and process the result
+        recognizer_result = await self._clu_recognizer.recognize(
             step_context.context
         )
 
@@ -121,8 +121,8 @@ class MainDialog(ComponentDialog):
         await self._track_intent(step_context, intent, recognizer_result)
 
         if intent == Intent.BOOK_FLIGHT:
-            # Extract booking details from LUIS entities
-            booking_details = LuisHelper.extract_booking_details(
+            # Extract booking details from CLU entities
+            booking_details = CluHelper.extract_booking_details(
                 intent, recognizer_result
             )
             return await step_context.begin_dialog(
@@ -204,7 +204,7 @@ class MainDialog(ComponentDialog):
                 "text": step_context.context.activity.text or "",
             }
             self.telemetry_client.track_event(
-                "LuisIntent", properties
+                "CluIntent", properties
             )
 
     async def _track_failed_comprehension(self, step_context):

@@ -3,14 +3,14 @@
 # Licensed under the MIT License.
 
 """
-Prepare training data for LUIS/CLU from the Frames dataset.
+Prepare training data for Azure AI Language CLU from the Frames dataset.
 
 Parses the Frames dataset JSON to extract training utterances with 
 labeled intents and entities:
     - Intent: BookFlight
     - Entities: or_city, dst_city, str_date, end_date, budget
 
-Outputs training data in LUIS-compatible JSON format.
+Outputs training data in CLU-compatible JSON format.
 """
 
 import json
@@ -19,12 +19,13 @@ import sys
 import re
 from typing import List, Dict, Any
 
+
 # Paths
 DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 FRAMES_FILE = os.path.join(DATA_DIR, "..", "data", "frames.json")
 OUTPUT_DIR = DATA_DIR
-TRAIN_OUTPUT = os.path.join(OUTPUT_DIR, "luis_train_data.json")
-TEST_OUTPUT = os.path.join(OUTPUT_DIR, "luis_test_data.json")
+TRAIN_OUTPUT = os.path.join(OUTPUT_DIR, "clu_train_data.json")
+TEST_OUTPUT = os.path.join(OUTPUT_DIR, "clu_test_data.json")
 
 
 def load_frames_dataset(filepath: str) -> list:
@@ -111,7 +112,7 @@ def extract_entities_from_turn(turn: dict) -> List[Dict[str, Any]]:
 
 
 def map_entity_type(key: str) -> str:
-    """Map Frames dataset keys to LUIS entity names."""
+    """Map Frames dataset keys to CLU entity names."""
     mapping = {
         "or_city": "or_city",
         "dst_city": "dst_city",
@@ -148,64 +149,60 @@ def determine_intent(turn: dict, entities: list) -> str:
     return "None"
 
 
-def format_for_luis(examples: List[Dict]) -> Dict:
+def format_for_clu(examples: List[Dict]) -> Dict:
     """
-    Format training examples into LUIS application JSON format.
+    Format training examples into CLU application JSON format.
     
-    Reference: https://learn.microsoft.com/en-us/azure/cognitive-services/luis/
+    Reference: https://learn.microsoft.com/en-us/azure/ai-services/language-service/
+    conversational-language-understanding/concepts/data-formats
     """
     intents = set(ex["intent"] for ex in examples)
+    entity_types = set()
+    for ex in examples:
+        for ent in ex.get("entities", []):
+            entity_types.add(ent["entity"])
     
-    luis_app = {
-        "luis_schema_version": "7.0.0",
-        "versionId": "0.1",
-        "name": "FlyMe-FlightBooking",
-        "desc": "FlyMe flight booking chatbot - LUIS model",
-        "culture": "en-us",
-        "intents": [{"name": intent} for intent in intents],
-        "entities": [
-            {"name": "or_city", "roles": []},
-            {"name": "dst_city", "roles": []},
-            {"name": "str_date", "roles": []},
-            {"name": "end_date", "roles": []},
-            {"name": "budget", "roles": []},
-        ],
-        "composites": [],
-        "closedLists": [],
-        "patternAnyEntities": [],
-        "regex_entities": [],
-        "prebuiltEntities": [
-            {"name": "money", "roles": ["budget"]},
-            {"name": "datetimeV2", "roles": ["departure", "return"]},
-            {"name": "geographyV2", "roles": ["origin", "destination"]},
-        ],
-        "model_features": [],
-        "regex_features": [],
-        "patterns": [],
-        "utterances": [],
-    }
-    
+    # Build utterances in CLU format
+    clu_utterances = []
     for example in examples:
-        utterance = {
-            "text": example["text"],
-            "intent": example["intent"],
-            "entities": [],
-        }
-        
-        # Try to find entity positions in the text
+        utterance_entities = []
         for entity in example.get("entities", []):
             entity_value = entity["value"]
             start_pos = example["text"].lower().find(entity_value.lower())
             if start_pos >= 0:
-                utterance["entities"].append({
-                    "entity": entity["entity"],
-                    "startPos": start_pos,
-                    "endPos": start_pos + len(entity_value) - 1,
+                utterance_entities.append({
+                    "category": entity["entity"],
+                    "offset": start_pos,
+                    "length": len(entity_value),
                 })
         
-        luis_app["utterances"].append(utterance)
+        clu_utterances.append({
+            "text": example["text"],
+            "language": "en-us",
+            "intent": example["intent"],
+            "entities": utterance_entities,
+            "dataset": "Train",
+        })
     
-    return luis_app
+    clu_project = {
+        "projectFileVersion": "2022-10-01-preview",
+        "stringIndexType": "Utf16CodeUnit",
+        "metadata": {
+            "projectKind": "Conversation",
+            "projectName": "FlyMe-FlightBooking",
+            "multilingual": False,
+            "description": "FlyMe flight booking chatbot - CLU model",
+            "language": "en-us",
+        },
+        "assets": {
+            "projectKind": "Conversation",
+            "intents": [{"category": intent} for intent in intents],
+            "entities": [{"category": et} for et in entity_types],
+            "utterances": clu_utterances,
+        },
+    }
+    
+    return clu_project
 
 
 def split_train_test(examples: list, test_ratio: float = 0.2):
@@ -243,22 +240,22 @@ def main():
     print(f"   Training: {len(train_examples)} examples")
     print(f"   Testing:  {len(test_examples)} examples")
     
-    # Format for LUIS
-    train_luis = format_for_luis(train_examples)
-    test_luis = format_for_luis(test_examples)
+    # Format for CLU
+    train_clu = format_for_clu(train_examples)
+    test_clu = format_for_clu(test_examples)
     
     # Save outputs
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
     with open(TRAIN_OUTPUT, "w", encoding="utf-8") as f:
-        json.dump(train_luis, f, indent=2, ensure_ascii=False)
+        json.dump(train_clu, f, indent=2, ensure_ascii=False)
     print(f"\n✅ Training data saved: {TRAIN_OUTPUT}")
-    print(f"   {len(train_luis['utterances'])} utterances")
+    print(f"   {len(train_clu['assets']['utterances'])} utterances")
     
     with open(TEST_OUTPUT, "w", encoding="utf-8") as f:
-        json.dump(test_luis, f, indent=2, ensure_ascii=False)
+        json.dump(test_clu, f, indent=2, ensure_ascii=False)
     print(f"✅ Test data saved: {TEST_OUTPUT}")
-    print(f"   {len(test_luis['utterances'])} utterances")
+    print(f"   {len(test_clu['assets']['utterances'])} utterances")
     
     # Print intent distribution
     intent_counts = {}

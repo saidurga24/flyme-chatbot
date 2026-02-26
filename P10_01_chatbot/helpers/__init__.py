@@ -4,7 +4,8 @@
 
 """Helpers package initialization."""
 
-from .luis_helper import LuisHelper, Intent
+from .clu_helper import CluHelper, Intent
 from .dialog_helper import DialogHelper
 
-__all__ = ["LuisHelper", "Intent", "DialogHelper"]
+__all__ = ["CluHelper", "Intent", "DialogHelper"]
+

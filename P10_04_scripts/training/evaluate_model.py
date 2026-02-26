@@ -3,7 +3,7 @@
 # Licensed under the MIT License.
 
 """
-Evaluate the trained LUIS/CLU model offline.
+Evaluate the trained CLU model offline.
 
 Computes precision, recall, and F1 score for:
 - Intent classification
@@ -23,12 +23,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-LUIS_APP_ID = os.environ.get("LuisAppId", "")
-LUIS_API_KEY = os.environ.get("LuisAPIKey", "")
-LUIS_ENDPOINT = os.environ.get("LuisAPIHostName", "")
+CLU_PROJECT_NAME = os.environ.get("CluProjectName", "")
+CLU_DEPLOYMENT_NAME = os.environ.get("CluDeploymentName", "")
+CLU_API_KEY = os.environ.get("CluAPIKey", "")
+CLU_ENDPOINT = os.environ.get("CluEndpoint", "")
+API_VERSION = "2023-04-01"
 
 TEST_DATA_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "luis_test_data.json"
+    os.path.dirname(os.path.abspath(__file__)), "clu_test_data.json"
 )
 RESULTS_OUTPUT = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "evaluation_results.json"
@@ -36,30 +38,43 @@ RESULTS_OUTPUT = os.path.join(
 
 
 def load_test_data(filepath: str) -> dict:
-    """Load the test data from LUIS JSON format."""
+    """Load the test data from CLU JSON format."""
     with open(filepath, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def predict_utterance(text: str) -> dict:
     """
-    Send an utterance to the LUIS/CLU endpoint for prediction.
+    Send an utterance to the CLU endpoint for prediction.
     
     Returns the prediction result with intent and entities.
     """
-    url = (
-        f"https://{LUIS_ENDPOINT}/luis/prediction/v3.0/"
-        f"apps/{LUIS_APP_ID}/slots/production/predict"
-    )
-    params = {
-        "subscription-key": LUIS_API_KEY,
-        "verbose": True,
-        "show-all-intents": True,
-        "query": text,
+    url = f"{CLU_ENDPOINT}/language/:analyze-conversations"
+    params = {"api-version": API_VERSION}
+    headers = {
+        "Ocp-Apim-Subscription-Key": CLU_API_KEY,
+        "Content-Type": "application/json",
     }
-    
-    response = requests.get(url, params=params)
-    
+    payload = {
+        "kind": "Conversation",
+        "analysisInput": {
+            "conversationItem": {
+                "participantId": "user",
+                "id": "eval",
+                "modality": "text",
+                "language": "en",
+                "text": text,
+            }
+        },
+        "parameters": {
+            "projectName": CLU_PROJECT_NAME,
+            "deploymentName": CLU_DEPLOYMENT_NAME,
+            "verbose": True,
+        },
+    }
+
+    response = requests.post(url, headers=headers, json=payload, params=params)
+
     if response.status_code == 200:
         return response.json()
     else:
@@ -81,11 +96,12 @@ def evaluate_intent_classification(
     
     for utterance, prediction in zip(test_utterances, predictions):
         true_intent = utterance["intent"]
-        pred_intent = (
-            prediction["prediction"]["topIntent"]
-            if prediction
-            else "None"
-        )
+        
+        if prediction:
+            pred_data = prediction.get("result", {}).get("prediction", {})
+            pred_intent = pred_data.get("topIntent", "None")
+        else:
+            pred_intent = "None"
         
         if true_intent == pred_intent:
             tp[true_intent] += 1
@@ -133,14 +149,13 @@ def evaluate_entity_extraction(
     entity_types = ["or_city", "dst_city", "str_date", "end_date", "budget"]
     
     for utterance, prediction in zip(test_utterances, predictions):
-        true_entities = {e["entity"]: e.get("value", "") for e in utterance.get("entities", [])}
+        true_entities = {e["category"]: True for e in utterance.get("entities", [])}
         
         pred_entities = {}
-        if prediction and "prediction" in prediction:
-            pred_entity_data = prediction["prediction"].get("entities", {})
-            for entity_type in entity_types:
-                if entity_type in pred_entity_data:
-                    pred_entities[entity_type] = str(pred_entity_data[entity_type])
+        if prediction:
+            pred_data = prediction.get("result", {}).get("prediction", {})
+            for ent in pred_data.get("entities", []):
+                pred_entities[ent.get("category", "")] = True
         
         for entity_type in entity_types:
             true_has = entity_type in true_entities
@@ -175,26 +190,26 @@ def evaluate_entity_extraction(
     return results
 
 
-def run_offline_evaluation(test_utterances: list) -> Tuple[list, list]:
+def run_offline_evaluation(test_utterances: list) -> list:
     """
     Run predictions for all test utterances.
     
-    In offline mode (no LUIS endpoint), generates mock predictions
+    In offline mode (no CLU endpoint), generates mock predictions
     based on simple keyword matching for demonstration.
     """
     predictions = []
     
-    use_api = LUIS_APP_ID and LUIS_API_KEY and LUIS_ENDPOINT
+    use_api = CLU_PROJECT_NAME and CLU_API_KEY and CLU_ENDPOINT and CLU_DEPLOYMENT_NAME
     
     if use_api:
-        print("🔗 Using LUIS API for predictions...")
+        print("🔗 Using CLU API for predictions...")
         for i, utterance in enumerate(test_utterances):
             result = predict_utterance(utterance["text"])
             predictions.append(result)
             if (i + 1) % 50 == 0:
                 print(f"   Processed {i + 1}/{len(test_utterances)}")
     else:
-        print("📴 LUIS not configured - using offline keyword matching for evaluation demo...")
+        print("📴 CLU not configured - using offline keyword matching for evaluation demo...")
         for utterance in test_utterances:
             pred = offline_predict(utterance["text"])
             predictions.append(pred)
@@ -206,7 +221,7 @@ def offline_predict(text: str) -> dict:
     """
     Simple offline prediction using keyword matching.
     
-    This is a fallback for when LUIS is not configured, useful for
+    This is a fallback for when CLU is not configured, useful for
     testing the evaluation pipeline.
     """
     text_lower = text.lower()
@@ -229,10 +244,14 @@ def offline_predict(text: str) -> dict:
         intent = "None"
     
     return {
-        "prediction": {
-            "topIntent": intent,
-            "intents": {intent: {"score": 0.9}},
-            "entities": {},
+        "result": {
+            "prediction": {
+                "topIntent": intent,
+                "intents": [
+                    {"category": intent, "confidenceScore": 0.9}
+                ],
+                "entities": [],
+            }
         }
     }
 
@@ -291,7 +310,7 @@ def main():
     
     # Load test data
     test_data = load_test_data(TEST_DATA_PATH)
-    test_utterances = test_data.get("utterances", [])
+    test_utterances = test_data.get("assets", {}).get("utterances", [])
     
     if not test_utterances:
         print("⚠️ No test utterances found.")

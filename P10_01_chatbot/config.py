@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+kong#!/usr/bin/env python
 # Copyright (c) 2024. All rights reserved.
 # Licensed under the MIT License.
 
@@ -17,10 +17,11 @@ class DefaultConfig:
     APP_ID = os.environ.get("MicrosoftAppId", "")
     APP_PASSWORD = os.environ.get("MicrosoftAppPassword", "")
 
-    # LUIS / CLU Configuration
-    LUIS_APP_ID = os.environ.get("LuisAppId", "")
-    LUIS_API_KEY = os.environ.get("LuisAPIKey", "")
-    LUIS_API_HOST_NAME = os.environ.get("LuisAPIHostName", "")
+    # Azure AI Language (CLU) Configuration
+    CLU_PROJECT_NAME = os.environ.get("CluProjectName", "")
+    CLU_DEPLOYMENT_NAME = os.environ.get("CluDeploymentName", "")
+    CLU_API_KEY = os.environ.get("CluAPIKey", "")
+    CLU_ENDPOINT = os.environ.get("CluEndpoint", "")
 
     # Application Insights
     APPINSIGHTS_INSTRUMENTATION_KEY = os.environ.get(

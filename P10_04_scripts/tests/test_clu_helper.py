@@ -2,23 +2,23 @@
 # Copyright (c) 2024. All rights reserved.
 # Licensed under the MIT License.
 
-"""Unit tests for LUIS Helper entity extraction."""
+"""Unit tests for CLU Helper entity extraction."""
 
 import pytest
 from unittest.mock import MagicMock
 
 from botbuilder.core import RecognizerResult
-from helpers.luis_helper import LuisHelper, Intent
+from helpers.clu_helper import CluHelper, Intent
 from booking_details import BookingDetails
 
 
-class TestLuisHelper:
-    """Test suite for the LuisHelper class."""
+class TestCluHelper:
+    """Test suite for the CluHelper class."""
 
     def test_extract_booking_details_with_all_entities(self):
-        """Test extraction of all 5 entity types from a LUIS response."""
+        """Test extraction of all 5 entity types from a CLU response."""
         recognizer_result = RecognizerResult()
-        recognizer_result.intents = {"BookFlight": MagicMock(score=0.95)}
+        recognizer_result.intents = {"BookFlight": {"score": 0.95}}
         recognizer_result.entities = {
             "or_city": ["Paris"],
             "dst_city": ["New York"],
@@ -27,7 +27,7 @@ class TestLuisHelper:
             "budget": ["1000"],
         }
 
-        result = LuisHelper.extract_booking_details(
+        result = CluHelper.extract_booking_details(
             Intent.BOOK_FLIGHT, recognizer_result
         )
 
@@ -41,13 +41,13 @@ class TestLuisHelper:
     def test_extract_booking_details_with_partial_entities(self):
         """Test extraction when only some entities are present."""
         recognizer_result = RecognizerResult()
-        recognizer_result.intents = {"BookFlight": MagicMock(score=0.85)}
+        recognizer_result.intents = {"BookFlight": {"score": 0.85}}
         recognizer_result.entities = {
             "or_city": ["London"],
             "dst_city": ["Tokyo"],
         }
 
-        result = LuisHelper.extract_booking_details(
+        result = CluHelper.extract_booking_details(
             Intent.BOOK_FLIGHT, recognizer_result
         )
 
@@ -60,10 +60,10 @@ class TestLuisHelper:
     def test_extract_booking_details_no_entities(self):
         """Test extraction when no entities are present."""
         recognizer_result = RecognizerResult()
-        recognizer_result.intents = {"BookFlight": MagicMock(score=0.7)}
+        recognizer_result.intents = {"BookFlight": {"score": 0.7}}
         recognizer_result.entities = {}
 
-        result = LuisHelper.extract_booking_details(
+        result = CluHelper.extract_booking_details(
             Intent.BOOK_FLIGHT, recognizer_result
         )
 
@@ -73,12 +73,12 @@ class TestLuisHelper:
     def test_extract_booking_details_wrong_intent(self):
         """Test that non-BookFlight intents return empty booking details."""
         recognizer_result = RecognizerResult()
-        recognizer_result.intents = {"Greeting": MagicMock(score=0.9)}
+        recognizer_result.intents = {"Greeting": {"score": 0.9}}
         recognizer_result.entities = {
             "or_city": ["Paris"],
         }
 
-        result = LuisHelper.extract_booking_details(
+        result = CluHelper.extract_booking_details(
             Intent.GREETING, recognizer_result
         )
 
@@ -88,13 +88,13 @@ class TestLuisHelper:
     def test_extract_with_alternative_entity_names(self):
         """Test extraction with alternative entity naming (From/To format)."""
         recognizer_result = RecognizerResult()
-        recognizer_result.intents = {"BookFlight": MagicMock(score=0.9)}
+        recognizer_result.intents = {"BookFlight": {"score": 0.9}}
         recognizer_result.entities = {
             "From": ["Berlin"],
             "To": ["Rome"],
         }
 
-        result = LuisHelper.extract_booking_details(
+        result = CluHelper.extract_booking_details(
             Intent.BOOK_FLIGHT, recognizer_result
         )
 
@@ -104,12 +104,12 @@ class TestLuisHelper:
     def test_extract_money_entity(self):
         """Test extraction of money/budget entity."""
         recognizer_result = RecognizerResult()
-        recognizer_result.intents = {"BookFlight": MagicMock(score=0.9)}
+        recognizer_result.intents = {"BookFlight": {"score": 0.9}}
         recognizer_result.entities = {
             "money": ["500"],
         }
 
-        result = LuisHelper.extract_booking_details(
+        result = CluHelper.extract_booking_details(
             Intent.BOOK_FLIGHT, recognizer_result
         )
 
