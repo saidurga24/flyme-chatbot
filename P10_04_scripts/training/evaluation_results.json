@@ -1,0 +1,79 @@
+{
+  "num_test_utterances": 876,
+  "intent_classification": {
+    "Cancel": {
+      "precision": 0.0,
+      "recall": 0,
+      "f1_score": 0,
+      "true_positives": 0,
+      "false_positives": 2,
+      "false_negatives": 0
+    },
+    "None": {
+      "precision": 0.0,
+      "recall": 0,
+      "f1_score": 0,
+      "true_positives": 0,
+      "false_positives": 205,
+      "false_negatives": 0
+    },
+    "Greeting": {
+      "precision": 0.0257,
+      "recall": 1.0,
+      "f1_score": 0.0502,
+      "true_positives": 7,
+      "false_positives": 265,
+      "false_negatives": 0
+    },
+    "BookFlight": {
+      "precision": 1.0,
+      "recall": 0.4568,
+      "f1_score": 0.6272,
+      "true_positives": 397,
+      "false_positives": 0,
+      "false_negatives": 472
+    }
+  },
+  "entity_extraction": {
+    "or_city": {
+      "precision": 0,
+      "recall": 0.0,
+      "f1_score": 0,
+      "true_positives": 0,
+      "false_positives": 0,
+      "false_negatives": 352
+    },
+    "dst_city": {
+      "precision": 0,
+      "recall": 0.0,
+      "f1_score": 0,
+      "true_positives": 0,
+      "false_positives": 0,
+      "false_negatives": 497
+    },
+    "str_date": {
+      "precision": 0,
+      "recall": 0.0,
+      "f1_score": 0,
+      "true_positives": 0,
+      "false_positives": 0,
+      "false_negatives": 179
+    },
+    "end_date": {
+      "precision": 0,
+      "recall": 0.0,
+      "f1_score": 0,
+      "true_positives": 0,
+      "false_positives": 0,
+      "false_negatives": 113
+    },
+    "budget": {
+      "precision": 0,
+      "recall": 0.0,
+      "f1_score": 0,
+      "true_positives": 0,
+      "false_positives": 0,
+      "false_negatives": 187
+    }
+  }
+}

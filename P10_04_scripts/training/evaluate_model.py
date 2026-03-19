@@ -1,15 +1,9 @@
-#!/usr/bin/env python
-# Copyright (c) 2024. All rights reserved.
-# Licensed under the MIT License.
-
 """
-Evaluate the trained CLU model offline.
+Evaluate the CLU model on the held-out test set.
 
-Computes precision, recall, and F1 score for:
-- Intent classification
-- Entity extraction (per entity type)
-
-Uses a held-out test set from the training data preparation step.
+Computes precision, recall, and F1 for intent classification
+and entity extraction. Falls back to keyword matching if
+CLU credentials aren't configured.
 """
 
 import os
@@ -22,7 +16,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configuration
+
 CLU_PROJECT_NAME = os.environ.get("CluProjectName", "")
 CLU_DEPLOYMENT_NAME = os.environ.get("CluDeploymentName", "")
 CLU_API_KEY = os.environ.get("CluAPIKey", "")
@@ -44,11 +38,7 @@ def load_test_data(filepath: str) -> dict:
 
 
 def predict_utterance(text: str) -> dict:
-    """
-    Send an utterance to the CLU endpoint for prediction.
-    
-    Returns the prediction result with intent and entities.
-    """
+    """Send a single utterance to CLU for prediction."""
     url = f"{CLU_ENDPOINT}/language/:analyze-conversations"
     params = {"api-version": API_VERSION}
     headers = {
@@ -84,11 +74,7 @@ def predict_utterance(text: str) -> dict:
 def evaluate_intent_classification(
     test_utterances: list, predictions: list
 ) -> Dict[str, Dict[str, float]]:
-    """
-    Evaluate intent classification performance.
-    
-    Returns per-intent precision, recall, and F1 score.
-    """
+    """Compute per-intent precision, recall, F1."""
     # Count true positives, false positives, false negatives
     tp = defaultdict(int)
     fp = defaultdict(int)
@@ -137,11 +123,7 @@ def evaluate_intent_classification(
 def evaluate_entity_extraction(
     test_utterances: list, predictions: list
 ) -> Dict[str, Dict[str, float]]:
-    """
-    Evaluate entity extraction performance.
-    
-    Returns per-entity precision, recall, and F1 score.
-    """
+    """Compute per-entity-type precision, recall, F1."""
     tp = defaultdict(int)
     fp = defaultdict(int)
     fn = defaultdict(int)
@@ -191,25 +173,23 @@ def evaluate_entity_extraction(
 
 
 def run_offline_evaluation(test_utterances: list) -> list:
-    """
-    Run predictions for all test utterances.
-    
-    In offline mode (no CLU endpoint), generates mock predictions
-    based on simple keyword matching for demonstration.
-    """
+    """Run predictions - uses CLU API if configured, else keyword fallback."""
     predictions = []
     
-    use_api = CLU_PROJECT_NAME and CLU_API_KEY and CLU_ENDPOINT and CLU_DEPLOYMENT_NAME
+    def _is_real(val):
+        return val and not val.startswith("YOUR_") and "YOUR_RESOURCE" not in val
+
+    use_api = all(_is_real(v) for v in [CLU_PROJECT_NAME, CLU_API_KEY, CLU_ENDPOINT, CLU_DEPLOYMENT_NAME])
     
     if use_api:
-        print("🔗 Using CLU API for predictions...")
+        print("Using CLU API for predictions...")
         for i, utterance in enumerate(test_utterances):
             result = predict_utterance(utterance["text"])
             predictions.append(result)
             if (i + 1) % 50 == 0:
                 print(f"   Processed {i + 1}/{len(test_utterances)}")
     else:
-        print("📴 CLU not configured - using offline keyword matching for evaluation demo...")
+        print("CLU not configured - using keyword matching as fallback...")
         for utterance in test_utterances:
             pred = offline_predict(utterance["text"])
             predictions.append(pred)
@@ -218,12 +198,7 @@ def run_offline_evaluation(test_utterances: list) -> list:
 
 
 def offline_predict(text: str) -> dict:
-    """
-    Simple offline prediction using keyword matching.
-    
-    This is a fallback for when CLU is not configured, useful for
-    testing the evaluation pipeline.
-    """
+    """Keyword-based fallback when CLU isn't available."""
     text_lower = text.lower()
     
     # Intent classification
@@ -257,9 +232,8 @@ def offline_predict(text: str) -> dict:
 
 
 def print_results(intent_results: dict, entity_results: dict):
-    """Print evaluation results in a formatted table."""
     print("\n" + "=" * 60)
-    print("📊 INTENT CLASSIFICATION RESULTS")
+    print("INTENT CLASSIFICATION RESULTS")
     print("=" * 60)
     print(f"{'Intent':<15} {'Precision':<12} {'Recall':<12} {'F1 Score':<12}")
     print("-" * 60)
@@ -286,7 +260,7 @@ def print_results(intent_results: dict, entity_results: dict):
     print(f"{'Overall':<15} {'Accuracy:':<12} {accuracy:.4f}")
     
     print("\n" + "=" * 60)
-    print("📊 ENTITY EXTRACTION RESULTS")
+    print("ENTITY EXTRACTION RESULTS")
     print("=" * 60)
     print(f"{'Entity':<15} {'Precision':<12} {'Recall':<12} {'F1 Score':<12}")
     print("-" * 60)
@@ -302,10 +276,9 @@ def print_results(intent_results: dict, entity_results: dict):
 
 
 def main():
-    """Main function to run model evaluation."""
     if not os.path.exists(TEST_DATA_PATH):
-        print("❌ Test data not found!")
-        print("   Please run prepare_training_data.py first.")
+        print(f"Test data not found at {TEST_DATA_PATH}")
+        print("Run prepare_training_data.py first.")
         sys.exit(1)
     
     # Load test data
@@ -313,10 +286,10 @@ def main():
     test_utterances = test_data.get("assets", {}).get("utterances", [])
     
     if not test_utterances:
-        print("⚠️ No test utterances found.")
+        print("No test utterances found.")
         sys.exit(1)
     
-    print(f"📝 Evaluating {len(test_utterances)} test utterances...")
+    print(f"Evaluating {len(test_utterances)} test utterances...")
     
     # Run predictions
     predictions = run_offline_evaluation(test_utterances)
@@ -337,7 +310,7 @@ def main():
     
     with open(RESULTS_OUTPUT, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
-    print(f"\n✅ Results saved to: {RESULTS_OUTPUT}")
+    print(f"\nResults saved to {RESULTS_OUTPUT}")
 
 
 if __name__ == "__main__":

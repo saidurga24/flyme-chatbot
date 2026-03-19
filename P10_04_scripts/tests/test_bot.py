@@ -1,12 +1,8 @@
-#!/usr/bin/env python
-# Copyright (c) 2024. All rights reserved.
-# Licensed under the MIT License.
-
-"""Unit tests for the FlightBookingBot class."""
+"""Tests for FlightBookingBot initialization and welcome message."""
 
 import pytest
 import aiounittest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, AsyncMock
 
 from botbuilder.core import (
     ConversationState,
@@ -25,25 +21,21 @@ from config import DefaultConfig
 
 
 class TestFlightBookingBot(aiounittest.AsyncTestCase):
-    """Test suite for the FlightBookingBot class."""
 
     def _create_bot(self):
-        """Create a bot instance for testing."""
         storage = MemoryStorage()
         conversation_state = ConversationState(storage)
         user_state = UserState(storage)
-        
+
         config = DefaultConfig()
         recognizer = FlightBookingRecognizer(config)
         booking_dialog = BookingDialog()
         main_dialog = MainDialog(recognizer, booking_dialog)
-        
+
         return FlightBookingBot(conversation_state, user_state, main_dialog)
 
-    async def test_bot_welcome_message(self):
-        """Test that the bot sends a welcome message when a member is added."""
+    async def test_welcome_message(self):
         bot = self._create_bot()
-
         adapter = TestAdapter()
 
         async def exec_test(turn_context: TurnContext):
@@ -52,7 +44,6 @@ class TestFlightBookingBot(aiounittest.AsyncTestCase):
                 turn_context,
             )
 
-        # Start conversation and check welcome message is sent
         activity = Activity(
             type=ActivityTypes.conversation_update,
             channel_id="test",
@@ -62,20 +53,16 @@ class TestFlightBookingBot(aiounittest.AsyncTestCase):
         )
 
         result = await adapter.send(activity)
-        # The welcome message should contain "FlyMe"
         assert result is not None
 
-    async def test_bot_requires_conversation_state(self):
-        """Test that bot raises TypeError if conversation_state is None."""
+    async def test_requires_conversation_state(self):
         with pytest.raises(TypeError):
             FlightBookingBot(None, MagicMock(), MagicMock())
 
-    async def test_bot_requires_user_state(self):
-        """Test that bot raises TypeError if user_state is None."""
+    async def test_requires_user_state(self):
         with pytest.raises(TypeError):
             FlightBookingBot(MagicMock(), None, MagicMock())
 
-    async def test_bot_requires_dialog(self):
-        """Test that bot raises TypeError if dialog is None."""
+    async def test_requires_dialog(self):
         with pytest.raises(TypeError):
             FlightBookingBot(MagicMock(), MagicMock(), None)

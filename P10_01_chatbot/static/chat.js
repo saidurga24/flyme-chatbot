@@ -1,7 +1,4 @@
-/**
- * FlyMe Chat Interface - JavaScript
- * Handles sending/receiving messages via the /api/chat endpoint.
- */
+// Chat interface logic - talks to /api/chat
 
 // Generate a unique conversation ID for this session
 const conversationId = 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);

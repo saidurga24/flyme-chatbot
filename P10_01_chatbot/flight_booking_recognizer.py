@@ -1,11 +1,7 @@
-#!/usr/bin/env python
-# Copyright (c) 2024. All rights reserved.
-# Licensed under the MIT License.
+"""
+CLU Recognizer - wraps the Azure AI Language conversation analysis client.
 
-"""CLU Recognizer wrapper for the Flight Booking Bot.
-
-Uses the Azure AI Language – Conversational Language Understanding (CLU)
-service instead of the deprecated LUIS service.
+Replaces the deprecated LUIS service with CLU for intent/entity recognition.
 """
 
 from azure.core.credentials import AzureKeyCredential
@@ -16,13 +12,6 @@ from config import DefaultConfig
 
 
 class FlightBookingRecognizer(Recognizer):
-    """
-    CLU recognizer for the Flight Booking Bot.
-
-    Wraps the Azure AI Language ConversationAnalysisClient to provide
-    intent recognition and entity extraction for booking flight requests.
-    """
-
     def __init__(self, configuration: DefaultConfig):
         self._client = None
         self._project_name = configuration.CLU_PROJECT_NAME
@@ -43,16 +32,10 @@ class FlightBookingRecognizer(Recognizer):
 
     @property
     def is_configured(self) -> bool:
-        """Returns True if CLU is properly configured."""
         return self._client is not None
 
     async def recognize(self, turn_context: TurnContext) -> RecognizerResult:
-        """
-        Recognize user intent and entities from the turn context.
-
-        Calls the CLU prediction endpoint and maps the response
-        to a Bot Framework RecognizerResult.
-        """
+        """Send the user's message to CLU and return the recognized intent + entities."""
         utterance = turn_context.activity.text or ""
 
         if not utterance.strip():
@@ -62,7 +45,6 @@ class FlightBookingRecognizer(Recognizer):
                 entities={},
             )
 
-        # Call CLU
         result = self._client.analyze_conversation(
             task={
                 "kind": "Conversation",
@@ -83,17 +65,16 @@ class FlightBookingRecognizer(Recognizer):
             }
         )
 
-        # Map CLU response → RecognizerResult
         return self._map_clu_to_recognizer_result(utterance, result)
 
     @staticmethod
     def _map_clu_to_recognizer_result(
         utterance: str, clu_result: dict
     ) -> RecognizerResult:
-        """Convert a CLU prediction response into a RecognizerResult."""
+        """Convert the CLU API response into a Bot Framework RecognizerResult."""
         prediction = clu_result.get("result", {}).get("prediction", {})
 
-        # --- Intents ---
+        # intents
         top_intent = prediction.get("topIntent", "None")
         intents = {}
         for intent_obj in prediction.get("intents", []):
@@ -103,20 +84,19 @@ class FlightBookingRecognizer(Recognizer):
         if not intents:
             intents = {"None": {"score": 1.0}}
 
-        # --- Entities ---
+        # entities
         entities = {}
         for entity_obj in prediction.get("entities", []):
             category = entity_obj.get("category", "")
             text_value = entity_obj.get("text", "")
 
-            # Check for resolutions (e.g. dates, numbers)
+            # use resolved value if available (dates, numbers, etc.)
             resolutions = entity_obj.get("resolutions", [])
             if resolutions:
                 value = resolutions[0].get("value", text_value)
             else:
                 value = text_value
 
-            # Collect as lists (same entity category may appear multiple times)
             if category not in entities:
                 entities[category] = []
             entities[category].append(str(value))

@@ -1,12 +1,7 @@
-#!/usr/bin/env python
-# Copyright (c) 2024. All rights reserved.
-# Licensed under the MIT License.
-
 """
-FlyMe Flight Booking Bot - Application Entry Point.
+FlyMe Flight Booking Bot - main entry point.
 
-Runs the bot as an aiohttp web application with Bot Framework adapter.
-Serves the web chat interface and handles bot messages via /api/messages.
+Runs the bot on an aiohttp web server and serves the web chat UI.
 """
 
 import sys
@@ -34,32 +29,26 @@ from dialogs import MainDialog, BookingDialog
 from flight_booking_recognizer import FlightBookingRecognizer
 from helpers.telemetry_helper import TelemetryHelper
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
-# Load configuration
 CONFIG = DefaultConfig()
 
-# Create adapter settings and adapter
 SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
 
 
-# Error handler
 async def on_error(context: TurnContext, error: Exception):
-    """Handle errors from the bot adapter."""
+    """Log the error and let the user know something went wrong."""
     logger.error(f"[on_turn_error] unhandled error: {error}", exc_info=True)
     traceback.print_exc()
 
-    # Send error message to user
     await context.send_activity(
         "I'm sorry, something went wrong. Please try again or type 'cancel' to start over."
     )
-    # Send a trace activity (visible in Bot Framework Emulator)
     await context.send_activity(
         Activity(
             type=ActivityTypes.trace,
@@ -68,44 +57,37 @@ async def on_error(context: TurnContext, error: Exception):
             label="TurnError",
         )
     )
-    # Track error in Application Insights
     if TELEMETRY_CLIENT:
         TELEMETRY_CLIENT.track_exception(error)
 
-    # Clear conversation state on error
-    nonlocal CONVERSATION_STATE
+    # clear state so the bot doesn't get stuck
     await CONVERSATION_STATE.delete(context)
 
 
 ADAPTER.on_turn_error = on_error
 
-# Create state management
 MEMORY = MemoryStorage()
 CONVERSATION_STATE = ConversationState(MEMORY)
 USER_STATE = UserState(MEMORY)
 
-# Create telemetry client
 TELEMETRY_CLIENT = TelemetryHelper(
     connection_string=CONFIG.APPINSIGHTS_CONNECTION_STRING,
     instrumentation_key=CONFIG.APPINSIGHTS_INSTRUMENTATION_KEY,
 )
 
-# Create the LUIS/CLU recognizer
 RECOGNIZER = FlightBookingRecognizer(CONFIG)
 
-# Create dialogs
 BOOKING_DIALOG = BookingDialog()
 MAIN_DIALOG = MainDialog(RECOGNIZER, BOOKING_DIALOG, TELEMETRY_CLIENT)
 
-# Create bot
 BOT = FlightBookingBot(CONVERSATION_STATE, USER_STATE, MAIN_DIALOG)
 
-# --- In-memory conversation store for the web chat ---
+# in-memory store for web chat conversations
 CONVERSATIONS = {}
 
 
 async def messages(req: Request) -> Response:
-    """Handle incoming Bot Framework messages via POST /api/messages."""
+    """Handle Bot Framework messages (POST /api/messages)."""
     if "application/json" in req.headers.get("Content-Type", ""):
         body = await req.json()
     else:
@@ -122,9 +104,9 @@ async def messages(req: Request) -> Response:
 
 async def chat_api(req: Request) -> Response:
     """
-    Simple REST API for the web chat interface.
-    POST /api/chat with JSON body {"message": "user text", "conversation_id": "..."}
-    Returns JSON {"reply": "bot response"}
+    Simple REST endpoint for the web chat UI.
+    POST /api/chat with {"message": "...", "conversation_id": "..."}
+    Returns {"reply": "bot response"}
     """
     try:
         body = await req.json()
@@ -134,7 +116,6 @@ async def chat_api(req: Request) -> Response:
         if not user_message:
             return web.json_response({"reply": "Please enter a message."})
 
-        # Create a simple activity for processing
         activity = Activity(
             type=ActivityTypes.message,
             text=user_message,
@@ -146,11 +127,9 @@ async def chat_api(req: Request) -> Response:
             id=f"msg_{datetime.now().timestamp()}",
         )
 
-        # Collect bot responses
         bot_responses = []
 
         async def aux_func(turn_context: TurnContext):
-            # Override send_activity to capture responses
             original_send = turn_context.send_activity
 
             async def capture_send(activity_or_text, speak=None, input_hint=None):
@@ -177,22 +156,16 @@ async def chat_api(req: Request) -> Response:
 
 
 async def index(req: Request) -> Response:
-    """Serve the web chat interface."""
+    """Serve the web chat page."""
     return web.FileResponse("./static/index.html")
 
 
 def init_app():
-    """Initialize the aiohttp web application."""
     app = web.Application()
-
-    # Serve static files
     app.router.add_static("/static", "./static")
-
-    # Routes
     app.router.add_get("/", index)
     app.router.add_post("/api/messages", messages)
     app.router.add_post("/api/chat", chat_api)
-
     return app
 
 

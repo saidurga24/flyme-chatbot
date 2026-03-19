@@ -1,13 +1,7 @@
-#!/usr/bin/env python
-# Copyright (c) 2024. All rights reserved.
-# Licensed under the MIT License.
-
-"""Booking details data class for flight booking."""
+"""BookingDetails - holds the flight booking info from the conversation."""
 
 
 class BookingDetails:
-    """Holds the flight booking details extracted from the conversation."""
-
     def __init__(
         self,
         origin: str = None,
@@ -26,13 +20,13 @@ class BookingDetails:
         return (
             f"BookingDetails(origin='{self.origin}', "
             f"destination='{self.destination}', "
-            f"departure_date='{self.departure_date}', "
-            f"return_date='{self.return_date}', "
+            f"departure='{self.departure_date}', "
+            f"return='{self.return_date}', "
             f"budget='{self.budget}')"
         )
 
     def to_dict(self):
-        """Convert booking details to dictionary for telemetry."""
+        """For telemetry logging."""
         return {
             "origin": self.origin or "",
             "destination": self.destination or "",
