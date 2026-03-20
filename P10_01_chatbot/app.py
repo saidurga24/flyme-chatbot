@@ -21,7 +21,7 @@ from botbuilder.core import (
     UserState,
     TurnContext,
 )
-from botbuilder.schema import Activity, ActivityTypes
+from botbuilder.schema import Activity, ActivityTypes, ConversationAccount, ChannelAccount
 
 from config import DefaultConfig
 from bot import FlightBookingBot
@@ -120,9 +120,9 @@ async def chat_api(req: Request) -> Response:
             type=ActivityTypes.message,
             text=user_message,
             channel_id="webchat",
-            from_property={"id": f"user_{conversation_id}", "name": "User"},
-            recipient={"id": "bot", "name": "FlyMe Bot"},
-            conversation={"id": conversation_id},
+            from_property=ChannelAccount(id=f"user_{conversation_id}", name="User"),
+            recipient=ChannelAccount(id="bot", name="FlyMe Bot"),
+            conversation=ConversationAccount(id=conversation_id),
             service_url="http://localhost",
             id=f"msg_{datetime.now().timestamp()}",
         )
