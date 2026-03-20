@@ -21,7 +21,7 @@ from botbuilder.core import (
     UserState,
     TurnContext,
 )
-from botbuilder.schema import Activity, ActivityTypes, ConversationAccount, ChannelAccount
+from botbuilder.schema import Activity, ActivityTypes, ConversationAccount, ChannelAccount, ResourceResponse
 
 from config import DefaultConfig
 from bot import FlightBookingBot
@@ -137,7 +137,7 @@ async def chat_api(req: Request) -> Response:
                     bot_responses.append(activity_or_text)
                 elif hasattr(activity_or_text, "text") and activity_or_text.text:
                     bot_responses.append(activity_or_text.text)
-                return await original_send(activity_or_text, speak, input_hint)
+                return ResourceResponse(id="captured")
 
             turn_context.send_activity = capture_send
             await BOT.on_turn(turn_context)
