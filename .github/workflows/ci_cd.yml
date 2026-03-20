@@ -42,8 +42,6 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install dependencies into chatbot folder
-        run: pip install -r P10_01_chatbot/requirements.txt --target P10_01_chatbot/.python_packages/lib/site-packages
 
       - name: Login to Azure
         uses: azure/login@v2
