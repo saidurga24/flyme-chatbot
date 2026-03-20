@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlyMe Chatbot – Project 10 Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ===========================
+       RESET & BASE
+    =========================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0d1b2a;
+      --blue:   #1565c0;
+      --sky:    #4fc3f7;
+      --accent: #ff8c42;
+      --green:  #66bb6a;
+      --red:    #ef5350;
+      --white:  #f0f4ff;
+      --muted:  #8fa3bf;
+      --card:   rgba(255,255,255,0.06);
+      --border: rgba(79,195,247,0.25);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      overflow: hidden;
+    }
+
+    /* ===========================
+       SLIDESHOW STRUCTURE
+    =========================== */
+    .deck { position: relative; width: 100vw; height: 100vh; }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 60px 80px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s ease;
+      overflow: hidden;
+    }
+    .slide.active { opacity: 1; pointer-events: all; }
+
+    /* ===========================
+       BACKGROUND DECORATION
+    =========================== */
+    .slide::before {
+      content: '';
+      position: absolute; top: -200px; right: -200px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(79,195,247,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .slide::after {
+      content: '';
+      position: absolute; bottom: -200px; left: -200px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(255,140,66,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ===========================
+       SLIDE HEADER BAR
+    =========================== */
+    .slide-header {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--sky), var(--accent));
+    }
+    .slide-number {
+      position: absolute; bottom: 24px; right: 36px;
+      font-size: 12px; color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ===========================
+       TYPOGRAPHY
+    =========================== */
+    h1 { font-size: 3.2rem; font-weight: 800; line-height: 1.1; }
+    h2 { font-size: 2.2rem; font-weight: 700; margin-bottom: 32px; }
+    h3 { font-size: 1.3rem; font-weight: 600; color: var(--sky); margin-bottom: 12px; }
+    p, li { font-size: 1.05rem; line-height: 1.7; color: #c8d8ed; }
+    ul { list-style: none; }
+    ul li::before { content: '▸ '; color: var(--sky); font-size: 0.85rem; }
+
+    .gradient-text {
+      background: linear-gradient(135deg, var(--sky), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .muted { color: var(--muted); font-size: 0.95rem; }
+    .highlight { color: var(--sky); font-weight: 600; }
+    .accent { color: var(--accent); font-weight: 600; }
+    .success { color: var(--green); }
+    .danger  { color: var(--red); }
+
+    /* ===========================
+       CARDS & GRIDS
+    =========================== */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      backdrop-filter: blur(8px);
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; width: 100%; }
+
+    /* ===========================
+       TECH BADGE
+    =========================== */
+    .badges { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 24px; }
+    .badge {
+      background: rgba(79,195,247,0.12);
+      border: 1px solid rgba(79,195,247,0.3);
+      border-radius: 50px;
+      padding: 8px 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--sky);
+    }
+    .badge.orange {
+      background: rgba(255,140,66,0.12);
+      border-color: rgba(255,140,66,0.3);
+      color: var(--accent);
+    }
+
+    /* ===========================
+       PIPELINE STEPS
+    =========================== */
+    .pipeline {
+      display: flex; align-items: center; gap: 0; width: 100%;
+      justify-content: center; margin-top: 20px;
+    }
+    .step {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--sky);
+      min-width: 100px;
+    }
+    .arrow { font-size: 1.4rem; color: var(--accent); padding: 0 6px; }
+
+    /* ===========================
+       TABLE
+    =========================== */
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th {
+      background: rgba(79,195,247,0.15);
+      color: var(--sky); padding: 10px 14px;
+      text-align: left; font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 9px 14px; color: #c8d8ed; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    tr:hover td { background: rgba(255,255,255,0.03); }
+
+    /* ===========================
+       METRIC BOXES
+    =========================== */
+    .metric-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+    }
+    .metric-val { font-size: 2.2rem; font-weight: 800; }
+    .metric-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+    /* ===========================
+       CODE BLOCK
+    =========================== */
+    .code-block {
+      background: #0a1520;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 22px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: #a8c7e8;
+      white-space: pre;
+      text-align: left;
+      width: 100%;
+    }
+    .code-comment { color: #4a7a9b; }
+    .code-key { color: var(--sky); }
+    .code-val { color: var(--green); }
+    .code-kw  { color: var(--accent); }
+
+    /* ===========================
+       DIALOG FLOW STEPS
+    =========================== */
+    .flow-steps {
+      display: flex; flex-direction: column; gap: 10px;
+      width: 100%; max-width: 560px;
+    }
+    .flow-step {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 18px;
+    }
+    .flow-num {
+      background: linear-gradient(135deg, var(--sky), var(--blue));
+      border-radius: 50%;
+      width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .flow-text { font-size: 0.95rem; color: #c8d8ed; }
+
+    /* ===========================
+       NAVIGATION
+    =========================== */
+    .nav {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(13,27,42,0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 10px 20px;
+      z-index: 100;
+    }
+    .nav-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 38px; height: 38px;
+      color: var(--white); font-size: 1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { background: rgba(79,195,247,0.2); border-color: var(--sky); }
+    .nav-label { font-size: 0.85rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; min-width: 56px; text-align: center; }
+    .nav-dots { display: flex; gap: 6px; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--muted); cursor: pointer;
+      transition: all 0.3s;
+    }
+    .dot.active { background: var(--sky); transform: scale(1.4); }
+
+    /* ===========================
+       PROGRESS BAR
+    =========================== */
+    .progress-bar {
+      position: fixed; top: 0; left: 0; height: 3px;
+      background: linear-gradient(90deg, var(--sky), var(--accent));
+      transition: width 0.4s ease;
+      z-index: 200;
+    }
+
+    /* ===========================
+       TITLE SLIDE SPECIFICS
+    =========================== */
+    .title-slide { text-align: center; }
+    .title-slide .plane-emoji { font-size: 4rem; margin-bottom: 16px; display: block; animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+    .title-slide h1 { font-size: 3.8rem; }
+    .title-slide .subtitle { font-size: 1.3rem; color: var(--muted); margin-top: 12px; }
+    .title-slide .meta { margin-top: 40px; }
+    .title-meta-row { display: flex; gap: 40px; justify-content: center; margin-top: 16px; }
+    .title-meta-item { text-align: center; }
+    .title-meta-item .label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
+    .title-meta-item .value { font-size: 1.05rem; font-weight: 600; color: var(--sky); margin-top: 4px; }
+
+    /* ===========================
+       CHECKLIST
+    =========================== */
+    .checklist { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+    .check-item {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 18px;
+    }
+    .check-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .check-text { font-size: 0.95rem; }
+
+    /* ===========================
+       ARCH IMAGE
+    =========================== */
+    .arch-img-wrap {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      max-width: 680px;
+      width: 100%;
+    }
+    .arch-img-wrap img { width: 100%; display: block; }
+
+    /* ===========================
+       KQL BOX
+    =========================== */
+    .kql-box {
+      background: #080f18;
+      border: 1px solid rgba(102,187,106,0.3);
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #a8e6ab;
+      line-height: 1.6;
+      white-space: pre;
+      text-align: left;
+      width: 100%;
+    }
+
+    /* ===========================
+       ICON NUMBERS
+    =========================== */
+    .stat-row { display: flex; gap: 24px; width: 100%; justify-content: center; }
+    .stat-card {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 16px;
+      text-align: center;
+    }
+    .stat-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+    .stat-val { font-size: 1.8rem; font-weight: 800; }
+    .stat-desc { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+    /* Fullscreen keyboard hints */
+    .hint { position: fixed; top: 20px; right: 24px; font-size: 0.75rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+<div class="hint">← → or click arrows to navigate · F to fullscreen</div>
+
+<div class="deck" id="deck">
+
+  <!-- ===================== SLIDE 1: TITLE ===================== -->
+  <div class="slide active" id="s1">
+    <div class="slide-header"></div>
+    <div class="title-slide">
+      <span class="plane-emoji">✈️</span>
+      <h1 class="gradient-text">FlyMe</h1>
+      <h2 style="font-size:1.7rem;color:var(--white);margin-bottom:0;font-weight:400">Flight Booking Chatbot</h2>
+      <p class="subtitle">OpenClassrooms AI Engineer – Project 10</p>
+      <div class="meta">
+        <div class="title-meta-row">
+          <div class="title-meta-item"><div class="label">Student</div><div class="value">Durga</div></div>
+          <div class="title-meta-item"><div class="label">Framework</div><div class="value">Bot Framework v4</div></div>
+          <div class="title-meta-item"><div class="label">NLU</div><div class="value">Azure CLU</div></div>
+          <div class="title-meta-item"><div class="label">Date</div><div class="value">March 2026</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">1 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 2: PROJECT CONTEXT ===================== -->
+  <div class="slide" id="s2">
+    <div class="slide-header"></div>
+    <h2>Project <span class="gradient-text">Context</span></h2>
+    <div class="grid-2" style="max-width:860px">
+      <div class="card">
+        <h3>🏢 Company</h3>
+        <ul>
+          <li>FlyMe – a travel provider</li>
+          <li>Goal: V1 chatbot MVP for holiday flight bookings</li>
+          <li>Target users: FlyMe internal employees</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🎯 Chatbot Goal</h3>
+        <ul>
+          <li>Identify <span class="highlight">5 key entities</span> from conversation</li>
+          <li>Origin city</li>
+          <li>Destination city</li>
+          <li>Departure &amp; Return dates</li>
+          <li>Budget</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>📋 Deliverables</h3>
+        <ul>
+          <li>Functional chatbot (Bot Framework SDK)</li>
+          <li>Training &amp; evaluation pipeline</li>
+          <li>Application Insights monitoring</li>
+          <li>Performance monitoring methodology</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>⚠️ Constraints</h3>
+        <ul>
+          <li>Must alert on comprehension failures</li>
+          <li>F1 ≥ 0.85 intents, ≥ 0.80 entities</li>
+          <li>CI/CD pipeline with automated tests</li>
+          <li>Azure cloud deployment</li>
+        </ul>
+      </div>
+    </div>
+    <div class="slide-number">2 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 3: TECH STACK ===================== -->
+  <div class="slide" id="s3">
+    <div class="slide-header"></div>
+    <h2>Technology <span class="gradient-text">Stack</span></h2>
+    <div class="grid-3" style="max-width:900px">
+      <div class="card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:12px">🤖</div>
+        <h3>Bot Framework</h3>
+        <p>Microsoft Bot Framework SDK v4 (Python)</p>
+        <p class="muted" style="margin-top:8px">aiohttp server · Adaptive Cards</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:12px">🧠</div>
+        <h3>Azure CLU</h3>
+        <p>Conversational Language Understanding</p>
+        <p class="muted" style="margin-top:8px">Intent + entity recognition</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:12px">📊</div>
+        <h3>App Insights</h3>
+        <p>Azure Application Insights</p>
+        <p class="muted" style="margin-top:8px">Telemetry · KQL alerts</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:12px">☁️</div>
+        <h3>Azure Web App</h3>
+        <p>Cloud deployment</p>
+        <p class="muted" style="margin-top:8px">Python 3.11 runtime</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:12px">🔁</div>
+        <h3>GitHub Actions</h3>
+        <p>CI/CD pipeline</p>
+        <p class="muted" style="margin-top:8px">pytest · Azure deploy</p>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:12px">🗂️</div>
+        <h3>Frames Dataset</h3>
+        <p>Maluuba/Microsoft</p>
+        <p class="muted" style="margin-top:8px">1,369 travel dialogues</p>
+      </div>
+    </div>
+    <div class="slide-number">3 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 4: ARCHITECTURE ===================== -->
+  <div class="slide" id="s4">
+    <div class="slide-header"></div>
+    <h2>System <span class="gradient-text">Architecture</span></h2>
+    <div class="arch-img-wrap">
+      <img src="architecture_diagram.png" alt="FlyMe Architecture Diagram" />
+    </div>
+    <div class="badges" style="margin-top:20px">
+      <span class="badge">aiohttp Server</span>
+      <span class="badge">Bot Adapter</span>
+      <span class="badge">Waterfall Dialogs</span>
+      <span class="badge orange">Azure CLU</span>
+      <span class="badge orange">App Insights</span>
+    </div>
+    <div class="slide-number">4 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 5: DATASET ===================== -->
+  <div class="slide" id="s5">
+    <div class="slide-header"></div>
+    <h2>Training <span class="gradient-text">Dataset</span></h2>
+    <div class="stat-row" style="margin-bottom:24px;max-width:800px">
+      <div class="stat-card">
+        <span class="stat-icon">💬</span>
+        <div class="stat-val gradient-text">1,369</div>
+        <div class="stat-desc">Human-human dialogues</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">✈️</span>
+        <div class="stat-val gradient-text">5</div>
+        <div class="stat-desc">Extracted entity types</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🎓</span>
+        <div class="stat-val gradient-text">4</div>
+        <div class="stat-desc">Intent classes</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">📁</span>
+        <div class="stat-val gradient-text">1.4 MB</div>
+        <div class="stat-desc">CLU training JSON</div>
+      </div>
+    </div>
+    <div class="card" style="max-width:800px;width:100%">
+      <h3>Maluuba / Microsoft Frames Dataset</h3>
+      <ul>
+        <li>Vacation package booking conversations between human participants</li>
+        <li>Automatically parsed to extract BookFlight, Cancel, Greeting, None intents</li>
+        <li>Entities extracted: <code style="color:var(--sky)">or_city, dst_city, str_date, end_date, budget</code></li>
+        <li>80/20 train/test split → <code style="color:var(--accent)">clu_train_data.json</code> + <code style="color:var(--accent)">clu_test_data.json</code></li>
+      </ul>
+    </div>
+    <div class="slide-number">5 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 6: CLU MODEL ===================== -->
+  <div class="slide" id="s6">
+    <div class="slide-header"></div>
+    <h2>CLU <span class="gradient-text">Model</span></h2>
+    <div class="grid-2" style="max-width:860px">
+      <div class="card">
+        <h3>🎯 Intents</h3>
+        <ul>
+          <li><span class="success">BookFlight</span> — primary intent</li>
+          <li>Greeting — conversation opener</li>
+          <li>Cancel — abort booking</li>
+          <li>None — fallback</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🏷️ Entities (all 5 required)</h3>
+        <ul>
+          <li><code style="color:var(--sky)">or_city</code> — Origin city</li>
+          <li><code style="color:var(--sky)">dst_city</code> — Destination city</li>
+          <li><code style="color:var(--sky)">str_date</code> — Departure date</li>
+          <li><code style="color:var(--sky)">end_date</code> — Return date</li>
+          <li><code style="color:var(--sky)">budget</code> — Max budget</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:20px;max-width:860px;width:100%">
+      <h3 style="margin-bottom:14px">Training Pipeline</h3>
+      <div class="pipeline">
+        <div class="step">Frames<br/>Dataset</div>
+        <div class="arrow">→</div>
+        <div class="step">Extract<br/>Entities</div>
+        <div class="arrow">→</div>
+        <div class="step">Format<br/>CLU JSON</div>
+        <div class="arrow">→</div>
+        <div class="step">Train<br/>Model</div>
+        <div class="arrow">→</div>
+        <div class="step">Evaluate<br/>&amp; Deploy</div>
+      </div>
+    </div>
+    <div class="slide-number">6 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 7: DEMO ===================== -->
+  <div class="slide" id="s7">
+    <div class="slide-header"></div>
+    <h2>Chatbot <span class="gradient-text">Demo</span></h2>
+    <div class="grid-2" style="max-width:900px;align-items:start">
+      <div>
+        <h3>💬 Sample Conversation</h3>
+        <div class="card" style="font-size:0.9rem;line-height:2">
+          <div><span style="color:var(--muted)">Bot:</span> Welcome to FlyMe! Where would you like to fly from?</div>
+          <div><span style="color:var(--sky)">User:</span> I want to fly from Paris to New York on March 15</div>
+          <div><span style="color:var(--muted)">Bot:</span> Great! When would you like to return?</div>
+          <div><span style="color:var(--sky)">User:</span> Return March 28, budget is $1200</div>
+          <div><span style="color:var(--muted)">Bot:</span> ✅ Booking confirmed: Paris → New York, Mar 15–28, $1200</div>
+        </div>
+      </div>
+      <div>
+        <h3>🌐 Web Chat Interface</h3>
+        <div class="card">
+          <ul>
+            <li>WhatsApp-inspired chat UI in the browser</li>
+            <li>Direct Line API integration</li>
+            <li>Real-time entity extraction display</li>
+            <li>Confirmation card before finalizing</li>
+            <li>Works locally (port 3978) and on Azure</li>
+          </ul>
+          <div class="badges" style="margin-top:16px;justify-content:flex-start">
+            <span class="badge">HTML / CSS / JS</span>
+            <span class="badge orange">Bot Framework Direct Line</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">7 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 8: DIALOG FLOW ===================== -->
+  <div class="slide" id="s8">
+    <div class="slide-header"></div>
+    <h2>Dialog <span class="gradient-text">Flow</span></h2>
+    <div style="display:flex;gap:48px;align-items:center;max-width:900px;width:100%">
+      <div class="flow-steps" style="max-width:100%;flex:1">
+        <div class="flow-step"><div class="flow-num">1</div><div class="flow-text"><strong>CLU Recognition</strong> — Detect BookFlight intent + pre-fill any mentioned entities</div></div>
+        <div class="flow-step"><div class="flow-num">2</div><div class="flow-text"><strong>Origin Prompt</strong> — If or_city is missing, ask "Where from?"</div></div>
+        <div class="flow-step"><div class="flow-num">3</div><div class="flow-text"><strong>Destination Prompt</strong> — If dst_city is missing, ask "Where to?"</div></div>
+        <div class="flow-step"><div class="flow-num">4</div><div class="flow-text"><strong>Departure Date</strong> — Parse date using Recognizers-Text library</div></div>
+        <div class="flow-step"><div class="flow-num">5</div><div class="flow-text"><strong>Return Date</strong> — Validate return is after departure</div></div>
+        <div class="flow-step"><div class="flow-num">6</div><div class="flow-text"><strong>Budget Prompt</strong> — Accept currency amounts</div></div>
+        <div class="flow-step"><div class="flow-num">7</div><div class="flow-text"><strong>Confirmation</strong> — Summary card, Yes/No → record telemetry</div></div>
+      </div>
+      <div class="card" style="flex-shrink:0;width:220px;text-align:center">
+        <h3>Pattern</h3>
+        <p style="font-size:1.1rem;font-weight:700;color:var(--accent);margin-top:8px">Waterfall<br/>Dialog</p>
+        <p class="muted" style="margin-top:12px">Each step collects one missing entity — skips if already provided</p>
+      </div>
+    </div>
+    <div class="slide-number">8 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 9: APP INSIGHTS ===================== -->
+  <div class="slide" id="s9">
+    <div class="slide-header"></div>
+    <h2>Application <span class="gradient-text">Insights</span> Monitoring</h2>
+    <div class="grid-2" style="max-width:900px;align-items:start">
+      <div>
+        <h3>📡 Custom Events Tracked</h3>
+        <div class="card">
+          <table>
+            <tr><th>Event</th><th>Trigger</th></tr>
+            <tr><td><code style="color:var(--sky)">LuisIntent</code></td><td>Every user message</td></tr>
+            <tr><td><code style="color:var(--sky)">BookingCompleted</code></td><td>User confirms booking</td></tr>
+            <tr><td><code style="color:var(--red)">BotComprehensionFailure</code></td><td>Bot can't understand</td></tr>
+            <tr><td><code style="color:var(--sky)">DialogCancelled</code></td><td>User cancels flow</td></tr>
+          </table>
+        </div>
+      </div>
+      <div>
+        <h3>🔔 Alert Rule (KQL)</h3>
+        <div class="kql-box">customEvents
+| where name ==
+  "BotComprehensionFailure"
+| summarize count()
+  by bin(timestamp, 5m)
+| where count_ >= 3</div>
+        <p class="muted" style="margin-top:12px">→ Triggers email alert when &gt;3 failures in any 5-minute window</p>
+      </div>
+    </div>
+    <div class="slide-number">9 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 10: EVALUATION ===================== -->
+  <div class="slide" id="s10">
+    <div class="slide-header"></div>
+    <h2>Performance <span class="gradient-text">Evaluation</span></h2>
+    <div class="grid-2" style="max-width:900px;align-items:start">
+      <div>
+        <h3>🎯 Intent Results</h3>
+        <div class="card">
+          <table>
+            <tr><th>Intent</th><th>Precision</th><th>Recall</th><th>F1</th></tr>
+            <tr><td>BookFlight</td><td class="success">1.00</td><td class="success">0.99</td><td class="success">0.99</td></tr>
+            <tr><td>Cancel</td><td class="success">1.00</td><td class="success">1.00</td><td class="success">1.00</td></tr>
+            <tr><td>Greeting</td><td>0.75</td><td class="success">1.00</td><td class="success">0.85</td></tr>
+          </table>
+          <p class="muted" style="margin-top:10px">Target: F1 ≥ 0.85 ✅</p>
+        </div>
+      </div>
+      <div>
+        <h3>🏷️ Entity Results</h3>
+        <div class="card">
+          <table>
+            <tr><th>Entity</th><th>F1 Score</th><th>Target</th></tr>
+            <tr><td>or_city</td><td class="success">0.90</td><td class="muted">≥ 0.80</td></tr>
+            <tr><td>dst_city</td><td class="success">0.88</td><td class="muted">≥ 0.80</td></tr>
+            <tr><td>str_date</td><td class="success">0.92</td><td class="muted">≥ 0.80</td></tr>
+            <tr><td>end_date</td><td class="success">0.95</td><td class="muted">≥ 0.80</td></tr>
+            <tr><td>budget</td><td class="success">0.90</td><td class="muted">≥ 0.80</td></tr>
+          </table>
+          <p class="success" style="margin-top:10px;font-weight:600">✅ All targets met or exceeded!</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">10 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 11: METHODOLOGY ===================== -->
+  <div class="slide" id="s11">
+    <div class="slide-header"></div>
+    <h2>Monitoring <span class="gradient-text">Methodology</span></h2>
+    <div class="grid-2" style="max-width:900px;align-items:start">
+      <div>
+        <h3>📏 Evaluation Criteria</h3>
+        <div class="card">
+          <ul>
+            <li>Intent F1 ≥ <span class="highlight">0.85</span></li>
+            <li>Entity F1 ≥ <span class="highlight">0.80</span> per entity</li>
+            <li>Comprehension failure rate &lt; <span class="accent">10%</span></li>
+            <li>Monthly precision/recall trend tracking</li>
+          </ul>
+        </div>
+        <h3 style="margin-top:20px">🔄 Retraining Triggers</h3>
+        <div class="card">
+          <ul>
+            <li><span class="accent">Emergency</span> — &gt;20% failure rate (24h)</li>
+            <li><span class="highlight">Routine</span> — F1 drops below threshold (2 weeks)</li>
+            <li><span class="muted-text">Scheduled</span> — Full retrain monthly</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <h3>🔍 Production Monitoring Flow</h3>
+        <div class="flow-steps">
+          <div class="flow-step"><div class="flow-num" style="background:linear-gradient(135deg,var(--sky),var(--blue))">1</div><div class="flow-text">User messages → Bot logs intents + entities to App Insights</div></div>
+          <div class="flow-step"><div class="flow-num" style="background:linear-gradient(135deg,#ff8c42,#e65100)">2</div><div class="flow-text">BotComprehensionFailure events accumulate in real time</div></div>
+          <div class="flow-step"><div class="flow-num" style="background:linear-gradient(135deg,var(--green),#2e7d32)">3</div><div class="flow-text">KQL alert fires → email notification to team</div></div>
+          <div class="flow-step"><div class="flow-num" style="background:linear-gradient(135deg,#ab47bc,#6a1b9a)">4</div><div class="flow-text">Weekly review → retrain if thresholds breached</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">11 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 12: CI/CD ===================== -->
+  <div class="slide" id="s12">
+    <div class="slide-header"></div>
+    <h2>CI/CD <span class="gradient-text">Pipeline</span></h2>
+    <div class="grid-2" style="max-width:900px;align-items:start">
+      <div>
+        <h3>🔧 GitHub Actions Workflow</h3>
+        <div class="code-block"><span class="code-comment"># .github/workflows/ci_cd.yml</span>
+<span class="code-kw">on:</span> <span class="code-val">push to main</span>
+
+<span class="code-kw">jobs:</span>
+  <span class="code-key">test:</span>
+    <span class="code-comment">- Install dependencies</span>
+    <span class="code-comment">- Run pytest (17 tests)</span>
+    <span class="code-comment">- Fail fast on errors</span>
+
+  <span class="code-key">deploy:</span>
+    <span class="code-comment">- needs: test</span>
+    <span class="code-comment">- az webapp deploy</span></div>
+      </div>
+      <div>
+        <h3>✅ Unit Test Coverage</h3>
+        <div class="card">
+          <table>
+            <tr><th>Test Module</th><th>Tests</th></tr>
+            <tr><td>test_booking_dialog.py</td><td class="success">✅ Passing</td></tr>
+            <tr><td>test_bot.py</td><td class="success">✅ Passing</td></tr>
+            <tr><td>test_clu_helper.py</td><td class="success">✅ Passing</td></tr>
+          </table>
+          <div style="margin-top:16px;text-align:center">
+            <div style="font-size:2.5rem;font-weight:800;color:var(--green)">17 / 17</div>
+            <div class="muted">tests passing</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">12 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 13: DEPLOYMENT ===================== -->
+  <div class="slide" id="s13">
+    <div class="slide-header"></div>
+    <h2>Azure <span class="gradient-text">Deployment</span></h2>
+    <div class="grid-3" style="max-width:900px">
+      <div class="card" style="text-align:center">
+        <div style="font-size:2rem;margin-bottom:10px">☁️</div>
+        <h3>Azure Web App</h3>
+        <ul style="text-align:left">
+          <li>Python 3.11 runtime</li>
+          <li>Startup: <code style="color:var(--sky)">python app.py</code></li>
+          <li>Port 3978 exposed</li>
+        </ul>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2rem;margin-bottom:10px">🔐</div>
+        <h3>Secure Config</h3>
+        <ul style="text-align:left">
+          <li>All secrets via <code style="color:var(--sky)">.env</code></li>
+          <li>Never committed to Git</li>
+          <li>Azure App Settings for prod</li>
+        </ul>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:2rem;margin-bottom:10px">🛠️</div>
+        <h3>Management</h3>
+        <ul style="text-align:left">
+          <li><code style="color:var(--accent)">azure_manage.sh</code></li>
+          <li>Deploy / status / logs</li>
+          <li>One-command operations</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="max-width:900px;width:100%;margin-top:20px">
+      <h3>Azure Resources</h3>
+      <div class="badges" style="justify-content:flex-start">
+        <span class="badge">Azure Web App</span>
+        <span class="badge">Azure AI Language (CLU)</span>
+        <span class="badge">Application Insights</span>
+        <span class="badge orange">Azure Bot Service</span>
+        <span class="badge orange">Resource Group</span>
+      </div>
+    </div>
+    <div class="slide-number">13 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 14: ACCOMPLISHMENTS ===================== -->
+  <div class="slide" id="s14">
+    <div class="slide-header"></div>
+    <h2>Key <span class="gradient-text">Accomplishments</span></h2>
+    <div class="checklist" style="max-width:750px">
+      <div class="check-item"><span class="check-icon">✅</span><div class="check-text"><strong>Functional Chatbot</strong> — 5-entity booking flow with Bot Framework SDK v4</div></div>
+      <div class="check-item"><span class="check-icon">✅</span><div class="check-text"><strong>CLU NLU Integration</strong> — Migrated from LUIS to Azure CLU with custom recognizer &amp; helper</div></div>
+      <div class="check-item"><span class="check-icon">✅</span><div class="check-text"><strong>WhatsApp-Style Web UI</strong> — Custom chat interface with Direct Line API</div></div>
+      <div class="check-item"><span class="check-icon">✅</span><div class="check-text"><strong>Application Insights Telemetry</strong> — Custom events, KQL alert rules, monitoring dashboard</div></div>
+      <div class="check-item"><span class="check-icon">✅</span><div class="check-text"><strong>Training Pipeline</strong> — Frames → CLU JSON → train → evaluate (full automation)</div></div>
+      <div class="check-item"><span class="check-icon">✅</span><div class="check-text"><strong>17/17 Unit Tests Passing</strong> — Dialogs, entity extraction, bot initialization covered</div></div>
+      <div class="check-item"><span class="check-icon">✅</span><div class="check-text"><strong>CI/CD with GitHub Actions</strong> — Automated testing + Azure deployment on every push</div></div>
+      <div class="check-item"><span class="check-icon">✅</span><div class="check-text"><strong>Performance Monitoring Methodology</strong> — Documented criteria, retraining plan, production flow</div></div>
+    </div>
+    <div class="slide-number">14 / 15</div>
+  </div>
+
+  <!-- ===================== SLIDE 15: THANK YOU ===================== -->
+  <div class="slide" id="s15">
+    <div class="slide-header"></div>
+    <div class="title-slide">
+      <span style="font-size:3.5rem;display:block;margin-bottom:20px">🙏</span>
+      <h1 class="gradient-text">Thank You</h1>
+      <p class="subtitle">Questions & Discussion</p>
+      <div style="margin-top:40px;display:flex;gap:32px;justify-content:center;flex-wrap:wrap">
+        <div class="card" style="min-width:200px;text-align:center">
+          <div style="font-size:1.5rem;margin-bottom:8px">🐙</div>
+          <h3>GitHub</h3>
+          <p class="muted">github.com/saidurga24/<br/>flyme-chatbot</p>
+        </div>
+        <div class="card" style="min-width:200px;text-align:center">
+          <div style="font-size:1.5rem;margin-bottom:8px">🤖</div>
+          <h3>Live Demo</h3>
+          <p class="muted">Azure Web App<br/>(demo during Q&amp;A)</p>
+        </div>
+        <div class="card" style="min-width:200px;text-align:center">
+          <div style="font-size:1.5rem;margin-bottom:8px">📄</div>
+          <h3>Docs</h3>
+          <p class="muted">P10_02 Monitoring<br/>P10_03 Methodology</p>
+        </div>
+      </div>
+      <p style="margin-top:36px;color:var(--muted)">OpenClassrooms AI Engineer · Project 10 · March 2026</p>
+    </div>
+    <div class="slide-number">15 / 15</div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- NAVIGATION -->
+<nav class="nav">
+  <button class="nav-btn" id="prevBtn" onclick="navigate(-1)">←</button>
+  <div class="nav-dots" id="dots"></div>
+  <button class="nav-btn" id="nextBtn" onclick="navigate(1)">→</button>
+  <span class="nav-label" id="navLabel">1 / 15</span>
+</nav>
+
+<script>
+  const total = 15;
+  let current = 1;
+
+  // Build dots
+  const dotsContainer = document.getElementById('dots');
+  for (let i = 1; i <= total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 1 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsContainer.appendChild(d);
+  }
+
+  function goTo(n) {
+    document.getElementById('s' + current).classList.remove('active');
+    dotsContainer.children[current - 1].classList.remove('active');
+    current = Math.max(1, Math.min(total, n));
+    document.getElementById('s' + current).classList.add('active');
+    dotsContainer.children[current - 1].classList.add('active');
+    document.getElementById('navLabel').textContent = current + ' / ' + total;
+    document.getElementById('progress').style.width = (current / total * 100) + '%';
+  }
+
+  function navigate(dir) { goTo(current + dir); }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') navigate(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp') navigate(-1);
+    if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  // Init progress bar
+  document.getElementById('progress').style.width = (1 / total * 100) + '%';
+</script>
+</body>
+</html>

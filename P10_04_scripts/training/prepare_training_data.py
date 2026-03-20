@@ -66,8 +66,17 @@ def extract_user_utterances(frames_data: list) -> List[Dict[str, Any]]:
                     "entities": [],
                 })
 
-    print(f"  Extracted {len(training_examples)} examples")
-    return training_examples
+    # Deduplicate by text — CLU rejects datasets with repeated utterance text
+    seen_texts = set()
+    unique_examples = []
+    for ex in training_examples:
+        key = ex["text"].strip().lower()
+        if key not in seen_texts:
+            seen_texts.add(key)
+            unique_examples.append(ex)
+
+    print(f"  Extracted {len(training_examples)} examples → {len(unique_examples)} after deduplication")
+    return unique_examples
 
 
 def extract_entities_from_turn(turn: dict) -> List[Dict[str, Any]]:
@@ -135,7 +144,14 @@ def format_for_clu(examples: List[Dict]) -> Dict:
             entity_types.add(ent["entity"])
 
     clu_utterances = []
+    seen_texts = set()
     for example in examples:
+        # Skip duplicate utterance texts within this split
+        text_key = example["text"].strip().lower()
+        if text_key in seen_texts:
+            continue
+        seen_texts.add(text_key)
+
         utterance_entities = []
         for entity in example.get("entities", []):
             entity_value = entity["value"]
@@ -195,6 +211,33 @@ def main():
     if not examples:
         print("No training examples extracted - check the dataset.")
         sys.exit(1)
+
+    # Augment with synthetic Greeting / Cancel examples (Frames has very few)
+    synthetic = [
+        {"text": "hi", "intent": "Greeting", "entities": []},
+        {"text": "hello", "intent": "Greeting", "entities": []},
+        {"text": "hey", "intent": "Greeting", "entities": []},
+        {"text": "good morning", "intent": "Greeting", "entities": []},
+        {"text": "good afternoon", "intent": "Greeting", "entities": []},
+        {"text": "howdy", "intent": "Greeting", "entities": []},
+        {"text": "hi there", "intent": "Greeting", "entities": []},
+        {"text": "hello there", "intent": "Greeting", "entities": []},
+        {"text": "greetings", "intent": "Greeting", "entities": []},
+        {"text": "hey there", "intent": "Greeting", "entities": []},
+        {"text": "what's up", "intent": "Greeting", "entities": []},
+        {"text": "good evening", "intent": "Greeting", "entities": []},
+        {"text": "cancel", "intent": "Cancel", "entities": []},
+        {"text": "quit", "intent": "Cancel", "entities": []},
+        {"text": "stop", "intent": "Cancel", "entities": []},
+        {"text": "never mind", "intent": "Cancel", "entities": []},
+        {"text": "nevermind", "intent": "Cancel", "entities": []},
+        {"text": "abort", "intent": "Cancel", "entities": []},
+        {"text": "exit", "intent": "Cancel", "entities": []},
+        {"text": "no thanks", "intent": "Cancel", "entities": []},
+        {"text": "forget it", "intent": "Cancel", "entities": []},
+        {"text": "I want to cancel", "intent": "Cancel", "entities": []},
+    ]
+    examples = synthetic + examples
 
     train_examples, test_examples = split_train_test(examples)
     print(f"\nTrain: {len(train_examples)}, Test: {len(test_examples)}")
