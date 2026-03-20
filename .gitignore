@@ -35,7 +35,11 @@ Thumbs.db
 htmlcov/
 .coverage
 
-# Data
+# Data (large files — regenerate locally via download_frames.py / prepare_training_data.py)
+P10_04_scripts/data/frames/
+P10_04_scripts/training/clu_train_data.json
+P10_04_scripts/training/clu_test_data.json
+P10_04_scripts/training/evaluation_results.json
 data/frames.json
 data/*.csv
 
