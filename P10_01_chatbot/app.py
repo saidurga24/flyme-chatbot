@@ -60,7 +60,6 @@ async def on_error(context: TurnContext, error: Exception):
     if TELEMETRY_CLIENT:
         TELEMETRY_CLIENT.track_exception(error)
 
-    # clear state so the bot doesn't get stuck
     await CONVERSATION_STATE.delete(context)
 
 
@@ -82,7 +81,6 @@ MAIN_DIALOG = MainDialog(RECOGNIZER, BOOKING_DIALOG, TELEMETRY_CLIENT)
 
 BOT = FlightBookingBot(CONVERSATION_STATE, USER_STATE, MAIN_DIALOG)
 
-# in-memory store for web chat conversations
 CONVERSATIONS = {}
 
 

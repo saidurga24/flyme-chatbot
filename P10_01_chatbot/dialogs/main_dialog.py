@@ -77,7 +77,6 @@ class MainDialog(ComponentDialog):
         booking_details = BookingDetails()
 
         if not self._clu_recognizer.is_configured:
-            # no CLU - let user fill everything manually
             return await step_context.begin_dialog(
                 self._booking_dialog_id, booking_details
             )
@@ -92,7 +91,6 @@ class MainDialog(ComponentDialog):
             reverse=True,
         )[0] if recognizer_result.intents else Intent.NONE_INTENT
 
-        # log to App Insights
         await self._track_intent(step_context, intent, recognizer_result)
 
         if intent == Intent.BOOK_FLIGHT:

@@ -18,7 +18,10 @@ class TelemetryHelper:
         if connection_string or instrumentation_key:
             try:
                 conn = connection_string or f"InstrumentationKey={instrumentation_key}"
+                import threading
                 handler = AzureLogHandler(connection_string=conn)
+                if handler.lock is None:
+                    handler.lock = threading.RLock()
                 self._logger.addHandler(handler)
                 self._is_configured = True
                 logger.info("App Insights telemetry configured.")
