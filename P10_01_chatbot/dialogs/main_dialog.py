@@ -88,7 +88,7 @@ class MainDialog(ComponentDialog):
 
         intent = sorted(
             recognizer_result.intents,
-            key=recognizer_result.intents.get,
+            key=lambda k: recognizer_result.intents[k].get("score", 0.0),
             reverse=True,
         )[0] if recognizer_result.intents else Intent.NONE_INTENT
 
