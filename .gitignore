@@ -45,3 +45,6 @@ data/*.csv
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Web App Logs
+webapp_logs*
