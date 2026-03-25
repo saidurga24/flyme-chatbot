@@ -47,14 +47,13 @@ flyme-chatbot/
 │   ├── requirements.txt
 │   ├── Procfile
 │   └── startup.sh
-├── P10_02_monitoring_tool/       # App Insights setup guide
-├── P10_03_methodology/           # Monitoring methodology doc
+├── P10_02_monitoring_tool/       # App Insights screenshots & dashboard
 ├── P10_04_scripts/               # Pipeline scripts + tests
 │   ├── data/
 │   ├── training/
 │   ├── tests/
 │   └── .github/workflows/ci.yml
-├── P10_05_presentation/          # Presentation outline
+├── P10_05_presentation/          # Presentation slides & charts
 ├── .env.example
 ├── .gitignore
 └── README.md
@@ -129,15 +128,14 @@ Application Insights tracks:
 - Booking completions
 - Errors and exceptions
 
-See [P10_02_monitoring_tool.md](P10_02_monitoring_tool/P10_02_monitoring_tool.md) for details.
+See the screenshots in `P10_02_monitoring_tool/` for details about the telemetry dashboard and KQL alerts.
 
 ## Deliverables
 
 | # | Deliverable | Description |
 |---|-------------|-------------|
 | P10_01 | Chatbot | Web application with chat interface |
-| P10_02 | Monitoring Tool | Application Insights setup |
-| P10_03 | Methodology | Performance monitoring methodology |
+| P10_02 | Monitoring Tool | Application Insights setup and Screenshots |
 | P10_04 | Scripts | Training pipeline and tests |
 | P10_05 | Presentation | Slides for project defense |
 
