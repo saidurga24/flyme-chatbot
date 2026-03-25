@@ -104,13 +104,8 @@ class BookingDialog(CancelAndHelpDialog):
             return bd
 
         recognizer_result = await self._clu_recognizer.recognize(prompt_context.context)
-        intent = sorted(
-            recognizer_result.intents,
-            key=lambda k: recognizer_result.intents[k].get("score", 0.0),
-            reverse=True,
-        )[0] if recognizer_result.intents else None
-        
-        return CluHelper.extract_booking_details(intent, recognizer_result)
+        # Bypass intent classification for localized fallback entity extraction
+        return CluHelper._parse_entities(recognizer_result.entities)
 
     async def origin_step(self, step_context: WaterfallStepContext) -> DialogTurnResult:
         booking_details = step_context.options
