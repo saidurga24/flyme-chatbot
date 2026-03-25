@@ -29,7 +29,7 @@ class TestFlightBookingBot(aiounittest.AsyncTestCase):
 
         config = DefaultConfig()
         recognizer = FlightBookingRecognizer(config)
-        booking_dialog = BookingDialog()
+        booking_dialog = BookingDialog(recognizer)
         main_dialog = MainDialog(recognizer, booking_dialog)
 
         return FlightBookingBot(conversation_state, user_state, main_dialog)
